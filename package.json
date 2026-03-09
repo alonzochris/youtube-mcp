@@ -1,0 +1,26 @@
+{
+  "name": "youtube-mcp",
+  "version": "1.0.0",
+  "description": "Read-only YouTube MCP server exposing search, video, channel, playlist, and transcript tools",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.27.1",
+    "@googleapis/youtube": "31.0.0",
+    "youtube-transcript-plus": "1.2.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.18",
+    "tsx": "4.19.4",
+    "typescript": "5.8.3",
+    "vitest": "3.2.1"
+  }
+}

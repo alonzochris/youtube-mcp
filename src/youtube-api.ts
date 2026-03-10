@@ -1,4 +1,4 @@
-import { youtube } from "@googleapis/youtube";
+import { youtube, youtube_v3 } from "@googleapis/youtube";
 import { config } from "./config.js";
 
 const yt = youtube({ version: "v3", auth: config.YOUTUBE_API_KEY });
@@ -19,6 +19,52 @@ export async function searchVideos(query: string, maxResults: number) {
     publishedAt: item.snippet?.publishedAt,
     description: item.snippet?.description,
   }));
+}
+
+export async function searchChannels(query: string, maxResults: number) {
+  const res = await yt.search.list({
+    part: ["snippet"],
+    q: query,
+    type: ["channel"],
+    maxResults,
+  });
+
+  const searchItems = res.data.items ?? [];
+  const channelIds = Array.from(
+    new Set(searchItems.flatMap((item) => (item.id?.channelId ? [item.id.channelId] : item.snippet?.channelId ? [item.snippet.channelId] : [])))
+  );
+
+  const channelsById = new Map<string, youtube_v3.Schema$Channel>();
+
+  if (channelIds.length > 0) {
+    const channelRes = await yt.channels.list({
+      part: ["snippet", "statistics"],
+      id: channelIds,
+    });
+
+    for (const channel of channelRes.data.items ?? []) {
+      if (channel.id) {
+        channelsById.set(channel.id, channel);
+      }
+    }
+  }
+
+  return searchItems.map((item) => {
+    const channelId = item.id?.channelId ?? item.snippet?.channelId;
+    const channel = channelId ? channelsById.get(channelId) : undefined;
+
+    return {
+      channelId,
+      title: channel?.snippet?.title ?? item.snippet?.title,
+      description: channel?.snippet?.description ?? item.snippet?.description,
+      customUrl: channel?.snippet?.customUrl,
+      publishedAt: channel?.snippet?.publishedAt ?? item.snippet?.publishedAt,
+      subscriberCount: channel?.statistics?.subscriberCount,
+      hiddenSubscriberCount: channel?.statistics?.hiddenSubscriberCount,
+      videoCount: channel?.statistics?.videoCount,
+      viewCount: channel?.statistics?.viewCount,
+    };
+  });
 }
 
 export async function getVideoDetails(videoId: string) {

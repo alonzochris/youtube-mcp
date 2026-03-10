@@ -69,6 +69,7 @@ export const mockChannelResponse = {
         },
         statistics: {
           subscriberCount: "10000",
+          hiddenSubscriberCount: false,
           videoCount: "100",
           viewCount: "500000",
         },
@@ -138,4 +139,88 @@ export const mockTranscriptResponse = [
 
 export const mockEmptySearchResponse = {
   data: { items: [] },
+};
+
+export const mockChannelSearchResponse = {
+  data: {
+    items: [
+      {
+        id: { channelId: "UCtest" },
+        snippet: {
+          title: "Test Channel",
+          channelId: "UCtest",
+          publishedAt: "2020-01-01T00:00:00Z",
+          description: "Search description for test channel",
+        },
+      },
+      {
+        id: { channelId: "UCother" },
+        snippet: {
+          title: "Another Channel",
+          channelId: "UCother",
+          publishedAt: "2021-01-01T00:00:00Z",
+          description: "Search description for another channel",
+        },
+      },
+    ],
+  },
+};
+
+export const mockChannelSearchHydrationResponse = {
+  data: {
+    items: [
+      {
+        id: "UCtest",
+        snippet: {
+          title: "Test Channel",
+          description: "Channel description",
+          customUrl: "@testchannel",
+          publishedAt: "2020-01-01T00:00:00Z",
+        },
+        statistics: {
+          subscriberCount: "10000",
+          hiddenSubscriberCount: false,
+          videoCount: "100",
+          viewCount: "500000",
+        },
+      },
+      {
+        id: "UCother",
+        snippet: {
+          title: "Another Channel",
+          description: "Another channel description",
+          customUrl: "@anotherchannel",
+          publishedAt: "2021-01-01T00:00:00Z",
+        },
+        statistics: {
+          subscriberCount: "2500",
+          hiddenSubscriberCount: true,
+          videoCount: "40",
+          viewCount: "90000",
+        },
+      },
+    ],
+  },
+};
+
+export const mockChannelSearchPartialHydrationResponse = {
+  data: {
+    items: [
+      {
+        id: "UCtest",
+        snippet: {
+          title: "Test Channel",
+          description: "Channel description",
+          customUrl: "@testchannel",
+          publishedAt: "2020-01-01T00:00:00Z",
+        },
+        statistics: {
+          subscriberCount: "10000",
+          hiddenSubscriberCount: false,
+          videoCount: "100",
+          viewCount: "500000",
+        },
+      },
+    ],
+  },
 };

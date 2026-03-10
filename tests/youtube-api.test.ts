@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   mockSearchResponse,
+  mockChannelSearchResponse,
+  mockChannelSearchHydrationResponse,
+  mockChannelSearchPartialHydrationResponse,
   mockVideoResponse,
   mockEmptyVideoResponse,
   mockChannelResponse,
@@ -35,6 +38,7 @@ vi.mock("../src/config.js", () => ({
 
 const {
   searchVideos,
+  searchChannels,
   getVideoDetails,
   getChannelInfo,
   getChannelVideos,
@@ -81,6 +85,112 @@ describe("searchVideos", () => {
   it("propagates API errors", async () => {
     mockSearchList.mockRejectedValue(new Error("API quota exceeded"));
     await expect(searchVideos("test", 5)).rejects.toThrow("API quota exceeded");
+  });
+});
+
+describe("searchChannels", () => {
+  it("passes correct params to youtube.search.list and hydrates channels in one call", async () => {
+    mockSearchList.mockResolvedValue(mockChannelSearchResponse);
+    mockChannelsList.mockResolvedValue(mockChannelSearchHydrationResponse);
+
+    await searchChannels("ai podcast", 5);
+
+    expect(mockSearchList).toHaveBeenCalledWith({
+      part: ["snippet"],
+      q: "ai podcast",
+      type: ["channel"],
+      maxResults: 5,
+    });
+    expect(mockChannelsList).toHaveBeenCalledWith({
+      part: ["snippet", "statistics"],
+      id: ["UCtest", "UCother"],
+    });
+  });
+
+  it("merges search results with screening metrics", async () => {
+    mockSearchList.mockResolvedValue(mockChannelSearchResponse);
+    mockChannelsList.mockResolvedValue(mockChannelSearchHydrationResponse);
+
+    const results = await searchChannels("ai podcast", 5);
+
+    expect(results).toEqual([
+      {
+        channelId: "UCtest",
+        title: "Test Channel",
+        description: "Channel description",
+        customUrl: "@testchannel",
+        publishedAt: "2020-01-01T00:00:00Z",
+        subscriberCount: "10000",
+        hiddenSubscriberCount: false,
+        videoCount: "100",
+        viewCount: "500000",
+      },
+      {
+        channelId: "UCother",
+        title: "Another Channel",
+        description: "Another channel description",
+        customUrl: "@anotherchannel",
+        publishedAt: "2021-01-01T00:00:00Z",
+        subscriberCount: "2500",
+        hiddenSubscriberCount: true,
+        videoCount: "40",
+        viewCount: "90000",
+      },
+    ]);
+  });
+
+  it("returns empty array when no results and skips hydration", async () => {
+    mockSearchList.mockResolvedValue(mockEmptySearchResponse);
+
+    const results = await searchChannels("nonexistent", 5);
+
+    expect(results).toEqual([]);
+    expect(mockChannelsList).not.toHaveBeenCalled();
+  });
+
+  it("preserves search order and tolerates missing hydration data", async () => {
+    mockSearchList.mockResolvedValue(mockChannelSearchResponse);
+    mockChannelsList.mockResolvedValue(mockChannelSearchPartialHydrationResponse);
+
+    const results = await searchChannels("ai podcast", 5);
+
+    expect(results).toEqual([
+      {
+        channelId: "UCtest",
+        title: "Test Channel",
+        description: "Channel description",
+        customUrl: "@testchannel",
+        publishedAt: "2020-01-01T00:00:00Z",
+        subscriberCount: "10000",
+        hiddenSubscriberCount: false,
+        videoCount: "100",
+        viewCount: "500000",
+      },
+      {
+        channelId: "UCother",
+        title: "Another Channel",
+        description: "Search description for another channel",
+        customUrl: undefined,
+        publishedAt: "2021-01-01T00:00:00Z",
+        subscriberCount: undefined,
+        hiddenSubscriberCount: undefined,
+        videoCount: undefined,
+        viewCount: undefined,
+      },
+    ]);
+  });
+
+  it("propagates search API errors", async () => {
+    mockSearchList.mockRejectedValue(new Error("API quota exceeded"));
+
+    await expect(searchChannels("ai podcast", 5)).rejects.toThrow("API quota exceeded");
+  });
+
+  it("propagates channel hydration errors", async () => {
+    mockSearchList.mockResolvedValue(mockChannelSearchResponse);
+    mockChannelsList.mockRejectedValue(new Error("Forbidden"));
+
+    await expect(searchChannels("ai podcast", 5)).rejects.toThrow("Forbidden");
   });
 });
 

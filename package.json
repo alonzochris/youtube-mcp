@@ -12,8 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.27.1",
     "@googleapis/youtube": "31.0.0",
+    "@modelcontextprotocol/sdk": "1.27.1",
     "youtube-transcript-plus": "1.2.0",
     "zod": "4.3.6"
   },
